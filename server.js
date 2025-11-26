@@ -12,6 +12,7 @@ connectDB();
 
 // Routes import
 const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 
 // Middlewares
@@ -20,6 +21,7 @@ app.use(json);
 
 // Routes
 app.use("/api/users",userRoutes);
+app.use("/api/auth",authRoutes);
 app.get("/",(req,res)=>{
     res.send("Home Page");
 });

@@ -33,6 +33,9 @@ const userSchema = new mongoose.Schema({
         type : String,
         default : "user"
     },
+    refreshToken : {
+        type : String
+    },
     createdAt : {
         type : Date,
         default : Date.now

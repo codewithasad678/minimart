@@ -1,25 +1,37 @@
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
+const Response = require("../utils/response");
 
-
-const protect = async (req,res,next) => {
+const TokenValid = async (req, res, next) => {
     try {
         let token;
 
-        if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")){
+        if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
             token = req.headers.authorization.split(" ")[1];
         }
 
-        const decoded  = jwt.verify(token,process.env.JWT_SECRET_KEY);
-        req.user = await User.findById(decoded.id).select("-password");
-
-        if(!token){
-            res.status(400).json({success : false, error : "Not authorized"})
+        if (!token) {
+            return Response.error(res, 401, "Not authorized, no token");
         }
 
-    } catch (error) {
-        res.status(500).json({success : false, error : error.message})
-    }
-}
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-module.exports = protect;
+        req.user = await User.findById(decoded.id).select("-password");
+
+        if (!req.user) {
+            return Response.error(res, 404, "User not found");
+        }
+
+        next();
+    } catch (error) {
+        if (error.name === "TokenExpiredError") {
+            return Response.error(res, 401, "Token expired");
+        }
+        return Response.error(res, 500, error.message);
+    }
+};
+
+
+module.exports = {
+    TokenValid
+};
