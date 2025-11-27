@@ -22,16 +22,21 @@ const refreshToken = async (req, res) => {
             return Response.error(res, 403, "Refresh token is invalid or expired");
         }
 
-        const accessToken = JW.generateAccessToken(user.id);
+        const newAccessToken = JW.generateAccessToken(user.id);
         const newRefreshToken = JW.generateRefreshToken(user.id);
 
         user.refreshToken = newRefreshToken;
-        await user.save();
+        await User.findByIdAndUpdate(
+            user._id,
+            { refreshToken: newRefreshToken },
+            { validateBeforeSave: false }
+        );
 
-          return Response.success(res, 200, {
-            aToken: accessToken,
-            rToken: refreshToken,
-        }, "Token refreshed successfully");
+        return Response.success(res, 200 ,
+            "Token refreshed successfully",
+            { accessToken: newAccessToken,
+            refreshToken: newRefreshToken}
+        );
         
     }
     catch (error) {
