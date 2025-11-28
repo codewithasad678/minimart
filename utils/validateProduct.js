@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
 const productSchema = Joi.object({
-  name: Joi.string().required().message({
+  name: Joi.string().required().messages({
     "string.empty": "Product name is required."
   }),
   description: Joi.string().allow(""),
@@ -11,8 +11,21 @@ const productSchema = Joi.object({
   }),
   category: Joi.string().required(),
   stock: Joi.number().min(0)
-});
+}); 
+
+
+const updateProductSchema = Joi.object({
+  name: Joi.string(),
+  description: Joi.string().allow(""),
+  price: Joi.number(),
+  category: Joi.string(),              // NOT REQUIRED
+  stock: Joi.number().min(0)
+}).min(1); 
 
 const validateProduct = (data) => productSchema.validate(data);
+const updateProduct = (data) => updateProductSchema.validate(data);
 
-module.exports = validateProduct;
+module.exports = {
+  validateProduct,
+  updateProduct
+};
