@@ -1,7 +1,8 @@
 const Product = require('../models/productModel');
 const Response = require("../utils/response");
 const Validator = require("../utils/validateProduct");
-
+const fs = require('fs');
+const path = require('path');
 
 const getAllProducts = async (req, res) => {
     try{
@@ -67,6 +68,8 @@ const createProduct = async (req, res) => {
             return Response.error(res,400,error.details[0].message);
         }
 
+        req.body.image = req.file ? `/storage/product_images/${req.file.filename}` : null;
+
         const newProduct = await Product.create(req.body);
 
         if(!newProduct){
@@ -87,6 +90,29 @@ const updateProduct = async (req, res) => {
         if(error){
             return Response.error(res,400,error.details[0].message);
         }       
+        
+        const existingProduct = await Product.findById(productId);
+        if (!existingProduct) {
+            return Response.error(res, 404, "Product not found");
+        }
+
+        if(req.file){
+            req.body.image =`/storage/product_images/${req.file.filename}`;
+
+            if(existingProduct.image){
+               
+                const oldImagePath = path.join(__dirname, "../", existingProduct.image);    
+
+                fs.unlink(oldImagePath, (err) => {
+                    if (err) {
+                        console.error("Failed to delete old image:", err); 
+                    } else {
+                        console.log("Old image deleted successfully");
+                    }   
+                });
+            }
+        }
+
         const updatedProduct = await Product.findByIdAndUpdate(productId, req.body, {new: true}).select("-__v");
         if(!updatedProduct){
             return Response.error(res,404,"Product not found");

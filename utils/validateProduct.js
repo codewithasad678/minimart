@@ -19,8 +19,9 @@ const updateProductSchema = Joi.object({
   description: Joi.string().allow(""),
   price: Joi.number(),
   category: Joi.string(),              // NOT REQUIRED
-  stock: Joi.number().min(0)
-}).min(1); 
+  stock: Joi.number().min(0),
+  image: Joi.string().allow(null, "")
+}); 
 
 const validateProduct = (data) => productSchema.validate(data);
 const updateProduct = (data) => updateProductSchema.validate(data);
