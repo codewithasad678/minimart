@@ -7,6 +7,8 @@ const userRoutes = express.Router();
 
 userRoutes.post("/register",asyncHandler( userController.registerUser));
 userRoutes.post("/login",asyncHandler(userController.loginUser));
+userRoutes.post("/forgot-password",asyncHandler(userController.forgotPassword));
+userRoutes.post("/reset-password/:token",asyncHandler(userController.resetPassword));
 userRoutes.get("/",Auth.TokenValid,asyncHandler(userController.getUsers));
 
 

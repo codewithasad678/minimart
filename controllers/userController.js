@@ -1,8 +1,9 @@
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const Response = require("../utils/response");
+const sendEmail = require("../utils/sendEmail");
 const Token= require("../utils/jwt");
-
+const crypto = require("crypto");
 
 const registerUser = async (req,res) => {
     try {
@@ -77,8 +78,83 @@ const getUsers = async (req, res) => {
 };
 
 
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "No user found with this email"
+    });
+  }
+
+  // Generate token
+  const resetToken = user.generatePasswordResetToken();
+
+  // Save fields resetPasswordToken, resetPasswordExpire
+  await user.save({ validateBeforeSave: false });
+
+  // Simulate email (print in console)
+  const resetUrl = `${process.env.ENV_URL}/api/users/reset-password/${resetToken}`;
+  const message = `You requested a password reset.\n\n` +
+                    `Click the link below to reset your password:\n\n${resetUrl}\n\n` +
+                    `If you did not request this, ignore this email.`;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: "Password Reset Token",
+            message
+        });
+
+        Response.success(res, 200, "Password reset link sent to email", { resetUrl });
+
+    } catch (error) {
+        // If email fails, remove token from DB
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save({ validateBeforeSave: false });
+
+        return Response.error(res, 500, error.message);
+    }
+
+};
+
+const resetPassword = async (req, res) => {
+  const token = req.params.token;
+
+  // Hash token to compare
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpire: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Token is invalid or expired"
+    });
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Password has been reset successfully"
+  });
+};
+
 module.exports = {
     registerUser,
     loginUser,
-    getUsers
+    getUsers,
+    forgotPassword,
+    resetPassword
 }

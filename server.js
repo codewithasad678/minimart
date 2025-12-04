@@ -28,7 +28,7 @@ const orderRoutes = require("./routes/orderRoutes");
 app.use(json);
 
 app.use(cors({
-    origin: "*",
+    origin: "http://localhost:5000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
