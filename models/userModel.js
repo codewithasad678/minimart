@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema({
     name : {
@@ -23,7 +24,6 @@ const userSchema = new mongoose.Schema({
         type : String,
         required: [true, 'Password is required'],
         minlength: [8, 'Password must be at least 8 characters'],
-        maxlength: [20, 'Password cannot exceed 20 characters'],
         match: [
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,20}$/,
         'Password must contain uppercase, lowercase, number, and special character'
@@ -32,6 +32,17 @@ const userSchema = new mongoose.Schema({
     role : {
         type : String,
         default : "user"
+    },
+    refreshToken : {
+        type : String
+    },
+    resetPasswordToken: {
+        type: String,
+        default: null
+    },
+    resetPasswordExpire: {
+        type: Date,
+        default: null
     },
     createdAt : {
         type : Date,
@@ -53,6 +64,17 @@ userSchema.pre("save", async function(next) {
 // Method to compare passwords during login
 userSchema.methods.comparePassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Create password reset token
+userSchema.methods.generatePasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 min expire
+
+  return resetToken; 
 };
 
 

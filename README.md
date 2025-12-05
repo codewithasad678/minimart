@@ -1,3 +1,4 @@
+
 # MiniMart API
 
 A simple REST API for a store built with Node.js, Express, and MongoDB.
